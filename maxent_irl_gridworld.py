@@ -8,6 +8,7 @@ import img_utils
 from mdp import gridworld
 from mdp import value_iteration
 from maxent_irl import *
+import pdb
 
 Step = namedtuple('Step','cur_state action next_state reward done')
 
@@ -80,23 +81,30 @@ def generate_demonstrations(gw, policy, n_trajs=100, len_traj=20, rand_start=Fal
   """
 
   trajs = []
-  for i in range(n_trajs):
+ 
+
+  for i in range(n_trajs):#generate tragectors 
     if rand_start:
+
       # override start_pos
       start_pos = [np.random.randint(0, gw.height), np.random.randint(0, gw.width)]
 
     episode = []
     gw.reset(start_pos)
     cur_state = start_pos
-    cur_state, action, next_state, reward, is_done = gw.step(int(policy[gw.pos2idx(cur_state)]))
+    
+    
+    cur_state, action, next_state, reward, is_done = gw.step(int(policy[gw.pos2idx(cur_state)])) #check one step acordig to the policy
     episode.append(Step(cur_state=gw.pos2idx(cur_state), action=action, next_state=gw.pos2idx(next_state), reward=reward, done=is_done))
     # while not is_done:
-    for _ in range(len_traj):
+    
+    for _ in range(len_traj): #length of a trakectory 
         cur_state, action, next_state, reward, is_done = gw.step(int(policy[gw.pos2idx(cur_state)]))
         episode.append(Step(cur_state=gw.pos2idx(cur_state), action=action, next_state=gw.pos2idx(next_state), reward=reward, done=is_done))
         if is_done:
             break
     trajs.append(episode)
+  
   return trajs
 
 
@@ -113,23 +121,34 @@ def main():
 
   gw = gridworld.GridWorld(rmap_gt, {}, 1 - ACT_RAND)
 
-  rewards_gt = np.reshape(rmap_gt, H*W, order='F')
-  P_a = gw.get_transition_mat()
+  
 
-  values_gt, policy_gt = value_iteration.value_iteration(P_a, rewards_gt, GAMMA, error=0.01, deterministic=True)
+  rewards_gt = np.reshape(rmap_gt, H*W, order='F') #
+  
+  P_a = gw.get_transition_mat() #this is the transitin probablities of the matrix  5 action what is the probability of moving from state s1 to s2 give the action
+#getting the  transition probabilities in my case is just impossible ... 
+
+ 
+  
+  values_gt, policy_gt = value_iteration.value_iteration(P_a, rewards_gt, GAMMA, error=0.01, deterministic=True) #value iteration and policy acoding to the currrent rewards 0
+
   
   
   # use identity matrix as feature
-  feat_map = np.eye(N_STATES)
-
+  feat_map = np.eye(N_STATES)  #features as one hot encoding
+  
+  
   # other two features. due to the linear nature, 
   # the following two features might not work as well as the identity.
   # feat_map = feature_basis(gw)
   # feat_map = feature_coord(gw)
   np.random.seed(1)
-  trajs = generate_demonstrations(gw, policy_gt, n_trajs=N_TRAJS, len_traj=L_TRAJ, rand_start=RAND_START)
-  rewards = maxent_irl(feat_map, P_a, GAMMA, trajs, LEARNING_RATE, N_ITERS)
-  
+  trajs = generate_demonstrations(gw, policy_gt, n_trajs=N_TRAJS, len_traj=L_TRAJ, rand_start=RAND_START)  #this is the trajectories 
+
+  rewards = maxent_irl(feat_map, P_a, GAMMA, trajs, LEARNING_RATE, N_ITERS) #need to input the feature map , transition priobalibliteis og the world 
+
+  pdb.set_trace()
+
   values, _ = value_iteration.value_iteration(P_a, rewards, GAMMA, error=0.01, deterministic=True)
   # plots
   plt.figure(figsize=(20,4))
