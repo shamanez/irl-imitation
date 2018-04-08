@@ -34,22 +34,25 @@ def value_iteration(P_a, rewards, gamma, error=0.01, deterministic=True):
   values = np.zeros([N_STATES])
 
   # estimate values
+  
   while True:
+   
     values_tmp = values.copy()
 
     for s in range(N_STATES):
       v_s = []
-      values[s] = max([sum([P_a[s, s1, a]*(rewards[s] + gamma*values_tmp[s1]) for s1 in range(N_STATES)]) for a in range(N_ACTIONS)])
-
-    if max([abs(values[s] - values_tmp[s]) for s in range(N_STATES)]) < error:
+      values[s] = max([sum([P_a[s, s1, a]*(rewards[s] + gamma*values_tmp[s1]) for s1 in range(N_STATES)]) for a in range(N_ACTIONS)]) #belman expectation equation
+      
+    if max([abs(values[s] - values_tmp[s]) for s in range(N_STATES)]) < error:  #if we converge to the belman optimality please leave from the loop.
       break
+  
 
+  if deterministic: #if the actions are detemeinitc  taking the max probability action
 
-  if deterministic:
     # generate deterministic policy
     policy = np.zeros([N_STATES])
     for s in range(N_STATES):
-      policy[s] = np.argmax([sum([P_a[s, s1, a]*(rewards[s]+gamma*values[s1]) 
+      policy[s] = np.argmax([sum([P_a[s, s1, a]*(rewards[s]+gamma*values[s1])   #optimal policy 
                                   for s1 in range(N_STATES)]) 
                                   for a in range(N_ACTIONS)])
 

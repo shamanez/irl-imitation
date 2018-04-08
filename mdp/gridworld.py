@@ -132,7 +132,8 @@ class GridWorld(object):
       return [(tuple(state), 1)]
 
     if self.trans_prob == 1:
-      inc = self.neighbors[action]
+  
+      inc = self.neighbors[action]  #if this is deteministic 
       nei_s = (state[0] + inc[0], state[1] + inc[1])
       if nei_s[0] >= 0 and nei_s[0] < self.height and nei_s[
               1] >= 0 and nei_s[1] < self.width and self.grid[nei_s[0]][nei_s[1]] != 'x':
@@ -147,8 +148,10 @@ class GridWorld(object):
       mov_probs += (1-self.trans_prob)/self.n_actions
 
       for a in range(self.n_actions):
+
         inc = self.neighbors[a]
-        nei_s = (state[0] + inc[0], state[1] + inc[1])
+
+        nei_s = (state[0] + inc[0], state[1] + inc[1])   #this is more of making the zero probability if the action is towrads  out of the frame
         if nei_s[0] < 0 or nei_s[0] >= self.height or \
            nei_s[1] < 0 or nei_s[1] >= self.width or self.grid[nei_s[0]][nei_s[1]] == 'x':
           # if the move is invalid, accumulates the prob to the current state
@@ -156,11 +159,13 @@ class GridWorld(object):
           mov_probs[a] = 0
 
       res = []
+   
       for a in range(self.n_actions):
         if mov_probs[a] != 0:
           inc = self.neighbors[a]
           nei_s = (state[0] + inc[0], state[1] + inc[1])
           res.append((nei_s, mov_probs[a]))
+        
       return res
 
 
@@ -201,13 +206,13 @@ class GridWorld(object):
       reward        reward on the next state
       is_done       True/False - if the agent is already on the terminal states
     """
-    if self.is_terminal(self._cur_state):
+    if self.is_terminal(self._cur_state): #
       self._is_done = True
       return self._cur_state, action, self._cur_state, self.get_reward(self._cur_state), True
 
-    st_prob = self.get_transition_states_and_probs(self._cur_state, action)
-
-    sampled_idx = np.random.choice(np.arange(0, len(st_prob)), p=[prob for st, prob in st_prob])
+    st_prob = self.get_transition_states_and_probs(self._cur_state, action) #transtion probabilities acorinf to the action and state what about the transition probabilities
+   
+    sampled_idx = np.random.choice(np.arange(0, len(st_prob)), p=[prob for st, prob in st_prob]) #randomly taking an action
     last_state = self._cur_state
     next_state = st_prob[sampled_idx][0]
     reward = self.get_reward(last_state)
@@ -313,16 +318,19 @@ class GridWorld(object):
     """
     N_STATES = self.height*self.width
     N_ACTIONS = len(self.actions)
-    P_a = np.zeros((N_STATES, N_STATES, N_ACTIONS))
+    P_a = np.zeros((N_STATES, N_STATES, N_ACTIONS)) #initially everyting zero
     for si in range(N_STATES):
+      
       posi = self.idx2pos(si)
-      for a in range(N_ACTIONS):
-        probs = self.get_transition_states_and_probs(posi, a)
+     
+      for a in range(N_ACTIONS): #for each action
+        probs = self.get_transition_states_and_probs(posi, a) #position
 
         for posj, prob in probs:
           sj = self.pos2idx(posj)
           # Prob of si to sj given action a
           P_a[si, sj, a] = prob
+      
     return P_a
 
   def get_values_mat(self, values):
